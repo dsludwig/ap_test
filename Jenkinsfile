@@ -1,18 +1,22 @@
-/**
- * This pipeline will run a Docker image build
- */
-
-podTemplate(label: 'docker',
-  containers: [containerTemplate(name: 'docker', image: 'docker:1.11', ttyEnabled: true, command: 'cat')],
-  volumes: [hostPathVolume(hostPath: '/var/run/docker.sock', mountPath: '/var/run/docker.sock')]
-  ) {
-
-  def image = "jenkins/jnlp-slave"
-  node('docker') {
-    stage('Build Docker image') {
-      git 'https://github.com/jenkinsci/docker-jnlp-slave.git'
-      container('docker') {
-        sh "docker build -t ${image} ."
+pipeline {
+  agent {
+    kubernetes {
+      cloud 'kubernetes'
+      label 'mypod'
+      containerTemplate {
+        name 'maven'
+        image 'maven:3.3.9-jdk-8-alpine'
+        ttyEnabled true
+        command 'cat'
+      }
+    }
+  }
+  stages {
+    stage('Run maven') {
+      steps {
+        container('maven') {
+          sh 'mvn -version'
+        }
       }
     }
   }
